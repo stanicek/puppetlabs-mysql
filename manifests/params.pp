@@ -30,6 +30,7 @@ class mysql::params {
   $client_dev_package_provider = undef
   $daemon_dev_package_ensure   = 'present'
   $daemon_dev_package_provider = undef
+  $provider_prefered = 'mysql-community'
 
 
   case $::osfamily {
@@ -43,10 +44,14 @@ class mysql::params {
           }
         }
         /^(RedHat|CentOS|Scientific|OracleLinux)$/: {
-          if versioncmp($::operatingsystemmajrelease, '7') >= 0 {
-            $provider = 'mariadb'
+          if $provider_prefered == undef {
+            if versioncmp($::operatingsystemmajrelease, '7') >= 0 {
+              $provider = 'mariadb'
+            } else {
+              $provider = 'mysql'
+            }
           } else {
-            $provider = 'mysql'
+            $provider = $provider_prefered
           }
         }
         default: {
@@ -65,14 +70,25 @@ class mysql::params {
         $pidfile                 = '/var/run/mariadb/mariadb.pid'
         $daemon_dev_package_name = 'mariadb-devel'
       } else {
-        $client_package_name     = 'mysql'
-        $server_package_name     = 'mysql-server'
-        $server_service_name     = 'mysqld'
-        $log_error               = '/var/log/mysqld.log'
-        $config_file             = '/etc/my.cnf'
-        $includedir              = '/etc/my.cnf.d'
-        $pidfile                 = '/var/run/mysqld/mysqld.pid'
-        $daemon_dev_package_name = 'mysql-devel'
+        if $provider == 'mysql-community' {
+          $client_package_name     = 'mysql-community-client'
+          $server_package_name     = 'mysql-community-server'
+          $server_service_name     = 'mysqld'
+          $log_error               = '/var/log/mysqld.log'
+          $config_file             = '/etc/my.cnf'
+          $includedir              = '/etc/my.cnf.d'
+          $pidfile                 = '/var/run/mysqld/mysqld.pid'
+          $daemon_dev_package_name = 'mysql-community-devel'
+        } else {
+          $client_package_name     = 'mysql'
+          $server_package_name     = 'mysql-server'
+          $server_service_name     = 'mysqld'
+          $log_error               = '/var/log/mysqld.log'
+          $config_file             = '/etc/my.cnf'
+          $includedir              = '/etc/my.cnf.d'
+          $pidfile                 = '/var/run/mysqld/mysqld.pid'
+          $daemon_dev_package_name = 'mysql-devel'
+        }
       }
 
       $basedir                 = '/usr'
